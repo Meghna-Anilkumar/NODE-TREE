@@ -1,0 +1,8 @@
+import { Request, Response, NextFunction } from "express";
+
+export interface INodeController {
+  getFullTree(req: Request, res: Response, next: NextFunction): Promise<void>;
+  getRootNodes(req: Request, res: Response, next: NextFunction): Promise<void>;
+  createNode(req: Request, res: Response, next: NextFunction): Promise<void>;
+  deleteNode(req: Request, res: Response, next: NextFunction): Promise<void>;
+}
