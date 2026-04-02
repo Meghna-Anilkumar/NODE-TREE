@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { NodeRepository } from "../repositories/node.repository";
-import { NodeService } from "../services.ts/node.service";
+import { NodeService } from "../services/node.service";
 import { NodeController } from "../controllers/node.controller";
 import { NODE_ROUTES } from "../constants/node.routes";
 
