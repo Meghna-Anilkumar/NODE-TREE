@@ -30,53 +30,57 @@ const AddNodeForm: React.FC<AddNodeFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3">
-      <div className="flex-1 relative">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={placeholder}
-          disabled={isSubmitting}
-          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl
-                     focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200
-                     text-gray-800 placeholder-gray-400 transition-all"
-          autoFocus
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={placeholder}
+        disabled={isSubmitting}
+        className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-white border border-gray-300 rounded-xl
+                   focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200
+                   text-sm sm:text-base text-gray-800 placeholder-gray-400 transition-all"
+        autoFocus
+      />
 
-      <button
-        type="submit"
-        disabled={isSubmitting || !name.trim()}
-        className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all
-          ${isSubmitting || !name.trim()
-            ? "bg-gray-300 cursor-not-allowed text-gray-500"
-            : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
-          }`}
-      >
-        {isSubmitting ? (
-          <>
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Adding...
-          </>
-        ) : (
-          <>
-            <Plus size={18} />
-            {buttonText}
-          </>
-        )}
-      </button>
-
-      {onCancel && (
+      <div className="flex gap-2">
         <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="px-5 py-3 border border-gray-300 text-gray-600 rounded-xl hover:bg-gray-100 transition font-medium"
+          type="submit"
+          disabled={isSubmitting || !name.trim()}
+          className={`flex-1 sm:flex-none px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-medium
+            flex items-center justify-center gap-1.5 transition-all text-sm sm:text-base
+            ${
+              isSubmitting || !name.trim()
+                ? "bg-gray-300 cursor-not-allowed text-gray-500"
+                : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
+            }`}
         >
-          Cancel
+          {isSubmitting ? (
+            <>
+              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span>Adding…</span>
+            </>
+          ) : (
+            <>
+              <Plus size={16} />
+              <span>{buttonText}</span>
+            </>
+          )}
         </button>
-      )}
+
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="flex-1 sm:flex-none px-4 py-2 sm:px-5 sm:py-3 border border-gray-300
+                       text-gray-600 rounded-xl hover:bg-gray-100 transition font-medium
+                       text-sm sm:text-base"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 };
