@@ -1,9 +1,8 @@
-import mongoose, {Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface INode extends Document {
   name: string;
-  parent?: mongoose.Types.ObjectId;
-  children: mongoose.Types.ObjectId[];
+  parent: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }

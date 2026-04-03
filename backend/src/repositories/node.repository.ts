@@ -1,34 +1,37 @@
-import { Types } from "mongoose";
-import { INode } from "../interfaces/models/INodeModel";
-import { INodeRepository, ICreateNodeData } from "../interfaces/repositories/INodeRepository";
-import NodeModel from "../models/node.model";
+import { Types } from 'mongoose';
+import NodeModel from '../models/node.model';
+import { INodeRepository, ICreateNodeData } from '../interfaces/repositories/INodeRepository';
+import { INode } from '../interfaces/models/INodeModel';
+
 export class NodeRepository implements INodeRepository {
-  
-
-
-  async findAll(filter?: Partial<INode>): Promise<INode[]> {
-    return NodeModel.find();
+  async create(data: ICreateNodeData): Promise<INode> {
+    const created = await NodeModel.create(data);
+    return created.toObject();
   }
 
+  async findOne(filter: Record<string, any>): Promise<INode | null> {
+    return NodeModel.findOne(filter).lean();
+  }
   async findById(id: string | Types.ObjectId): Promise<INode | null> {
-    return NodeModel.findById(id);
+    return NodeModel.findById(id).lean();
+  }
+
+  async findRootNodes(): Promise<INode[]> {
+    return NodeModel.find({
+      $or: [{ parent: null }, { parent: { $exists: false } }]
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+  }
+
+  async findChildren(parentId: string | Types.ObjectId): Promise<INode[]> {
+    return NodeModel.find({ parent: new Types.ObjectId(parentId) })
+      .sort({ createdAt: -1 })
+      .lean();
   }
 
   async deleteById(id: string | Types.ObjectId): Promise<INode | null> {
     return NodeModel.findByIdAndDelete(id);
-  }
-
-  async create(data: ICreateNodeData): Promise<INode> {
-    return NodeModel.create(data);
-  }
-
-
-  async findRootNodes(): Promise<INode[]> {
-  return NodeModel.find({ $or: [{ parent: null }, { parent: { $exists: false } }] });
-}
-
-  async findChildren(parentId: string | Types.ObjectId): Promise<INode[]> {
-    return NodeModel.find({ parent: new Types.ObjectId(parentId) });
   }
 
   async findAllDescendantIds(nodeId: Types.ObjectId): Promise<Types.ObjectId[]> {
@@ -37,38 +40,17 @@ export class NodeRepository implements INodeRepository {
     const collect = async (currentId: Types.ObjectId): Promise<void> => {
       const children = await NodeModel.find(
         { parent: currentId },
-        { _id: 1 }   
-      );
+        { _id: 1 }
+      ).lean();
 
       for (const child of children) {
         const childId = child._id as Types.ObjectId;
         descendants.push(childId);
-        await collect(childId); 
+        await collect(childId);
       }
     };
 
     await collect(nodeId);
     return descendants;
-  }
-
-
-  async addChildToParent(
-    parentId: Types.ObjectId,
-    childId: Types.ObjectId
-  ): Promise<void> {
-    await NodeModel.findByIdAndUpdate(
-      parentId,
-      { $push: { children: childId } }
-    );
-  }
-
-  async removeChildFromParent(
-    parentId: Types.ObjectId,
-    childId: Types.ObjectId
-  ): Promise<void> {
-    await NodeModel.findByIdAndUpdate(
-      parentId,
-      { $pull: { children: childId } }
-    );
   }
 }

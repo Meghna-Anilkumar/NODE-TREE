@@ -1,27 +1,26 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import { INode } from '../interfaces/models/INodeModel';
 
-const NodeModel: Schema = new Schema(
- {
+
+const nodeSchema = new Schema<INode>(
+  {
     name: {
       type: String,
-      required: [true, "Node name is required"],
+      required: true,
       trim: true,
     },
     parent: {
       type: Schema.Types.ObjectId,
-      ref: "Node",
-      default: null,  
+      ref: 'Node',
+      default: null,
     },
-    children: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Node",
-        default: [],
-      },
-    ],
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-export default mongoose.model<INode>('Node', NodeModel);
+nodeSchema.index({ parent: 1 });
+nodeSchema.index({ parent: 1, createdAt: -1 });
+
+export default mongoose.model<INode>('Node', nodeSchema);

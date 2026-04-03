@@ -5,26 +5,8 @@ import { CreateNodeDTO, ApiResponse } from "../dtos/NodeDTO";
 import { HttpStatus } from "../constants/http.status";
 
 export class NodeController implements INodeController {
-  constructor(private readonly _nodeService: INodeService) {}
+  constructor(private readonly _nodeService: INodeService) { }
 
-
-  async getFullTree(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const tree = await this._nodeService.getFullTree();
-      console.log('Full tree:',tree)
-      const response: ApiResponse<typeof tree> = {
-        success: true,
-        data: tree,
-      };
-      res.status(HttpStatus.OK).json(response);
-    } catch (error) {
-      next(error);
-    }
-  }
 
 
   async getRootNodes(
@@ -124,6 +106,23 @@ export class NodeController implements INodeController {
       const response: ApiResponse<null> = {
         success: true,
         message: "Node and all descendants deleted successfully",
+      };
+      res.status(HttpStatus.OK).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getChildren(
+    req: Request<{ id: string }>,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const children = await this._nodeService.getChildren(req.params.id);
+      const response: ApiResponse<typeof children> = {
+        success: true,
+        data: children,
       };
       res.status(HttpStatus.OK).json(response);
     } catch (error) {

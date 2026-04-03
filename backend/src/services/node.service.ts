@@ -1,112 +1,90 @@
-import { Types } from "mongoose";
-import { INode } from "../interfaces/models/INodeModel";
-import { INodeService } from "../interfaces/services/INodeService";
-import { INodeRepository } from "../interfaces/repositories/INodeRepository";
-import { CreateNodeDTO, NodeTreeDTO } from "../dtos/NodeDTO";
-
-
-class AppError extends Error {
-  constructor(
-    public readonly message: string,
-    public readonly statusCode: number
-  ) {
-    super(message);
-    this.name = "AppError";
-    Object.setPrototypeOf(this, AppError.prototype);
-  }
-}
+import { Types } from 'mongoose';
+import { INodeService } from '../interfaces/services/INodeService';
+import { INodeRepository } from '../interfaces/repositories/INodeRepository';
+import { CreateNodeDTO } from '../dtos/NodeDTO';
+import { AppError } from '../errors/AppError';
 
 export class NodeService implements INodeService {
-  constructor(private readonly nodeRepository: INodeRepository) {}
+  constructor(private readonly _nodeRepository: INodeRepository) {}
 
-  async createNode(data: CreateNodeDTO): Promise<INode> {
-    const { name, parentId } = data;
+  async createNode(data: CreateNodeDTO): Promise<any> {
+  const { name, parentId } = data;
 
-    if (parentId) {
-      const parentNode = await this.nodeRepository.findById(parentId);
-      if (!parentNode) {
-        throw new AppError("Parent node not found", 404);
-      }
+  if (parentId) {
+    const parentExists = await this._nodeRepository.findById(parentId);
+    if (!parentExists) {
+      throw new AppError('Parent node not found', 404);
     }
-
-    const parent = parentId ? new Types.ObjectId(parentId) : undefined;
-
-    const newNode = await this.nodeRepository.create({
-      name,
-      parent,
-      children: [],
-    });
-
-    if (parent) {
-      await this.nodeRepository.addChildToParent(
-        parent,
-        newNode._id as Types.ObjectId
-      );
-    }
-
-    return newNode;
   }
 
-  async getAllNodes(): Promise<INode[]> {
-    return this.nodeRepository.findAll();
+  const trimmedName = name.trim();
+
+  const duplicate = await this._nodeRepository.findOne({
+    name: trimmedName,
+    parent: parentId ? new Types.ObjectId(parentId) : null,
+  });
+
+  if (duplicate) {
+    throw new AppError(`A node named with this name already exists`, 409);
   }
 
-  async getRootNodes(): Promise<INode[]> {
-    return this.nodeRepository.findRootNodes();
+  const newNode = await this._nodeRepository.create({
+    name: trimmedName,
+    parent: parentId ? new Types.ObjectId(parentId) : undefined,
+  });
+
+  return {
+    ...newNode,
+    _id: newNode._id.toString(),
+    parent: newNode.parent ? newNode.parent.toString() : null,
+  };
+}
+
+async getRootNodes(): Promise<any[]> {
+  const roots = await this._nodeRepository.findRootNodes();
+  return roots.map((node) => ({
+    _id: node._id.toString(),
+    name: node.name,
+    parent: node.parent ? node.parent.toString() : null,
+    createdAt: node.createdAt,
+    updatedAt: node.updatedAt,
+    children: [],
+  }));
+}
+
+  async getChildren(parentId: string): Promise<any[]> {
+    const children = await this._nodeRepository.findChildren(parentId);
+    return children.map((node) => ({
+      ...node,
+      _id: node._id.toString(),
+      parent: node.parent ? node.parent.toString() : null,
+    }));
   }
 
-  async getNodeById(id: string): Promise<INode | null> {
-    return this.nodeRepository.findById(id);
-  }
+  async getNodeById(id: string): Promise<any | null> {
+    const node = await this._nodeRepository.findById(id);
+    if (!node) return null;
 
-  async getFullTree(): Promise<NodeTreeDTO[]> {
-    const roots = await this.nodeRepository.findRootNodes();
-    return Promise.all(roots.map((root) => this.buildTree(root)));
+    return {
+      ...node,
+      _id: node._id.toString(),
+      parent: node.parent ? node.parent.toString() : null,
+    };
   }
 
   async deleteNode(id: string): Promise<boolean> {
     const nodeId = new Types.ObjectId(id);
+    const node = await this._nodeRepository.findById(nodeId);
 
-    const node = await this.nodeRepository.findById(nodeId);
     if (!node) return false;
 
-    if (node.parent) {
-      await this.nodeRepository.removeChildFromParent(
-        node.parent as Types.ObjectId,
-        nodeId
-      );
-    }
+    const descendantIds = await this._nodeRepository.findAllDescendantIds(nodeId);
+    const allIdsToDelete = [nodeId, ...descendantIds];
 
-    const descendantIds = await this.nodeRepository.findAllDescendantIds(nodeId);
-    const allIds = [nodeId, ...descendantIds];
-
-    await Promise.all(allIds.map((descId) => this.nodeRepository.deleteById(descId)));
+    await Promise.all(
+      allIdsToDelete.map((delId) => this._nodeRepository.deleteById(delId))
+    );
 
     return true;
-  }
-
-  async getAllDescendantIds(nodeId: string): Promise<Types.ObjectId[]> {
-    return this.nodeRepository.findAllDescendantIds(new Types.ObjectId(nodeId));
-  }
-
-
-
-  private async buildTree(node: INode): Promise<NodeTreeDTO> {
-    const children = await this.nodeRepository.findChildren(
-      node._id as Types.ObjectId
-    );
-
-    const childTrees = await Promise.all(
-      children.map((child) => this.buildTree(child))
-    );
-
-    return {
-      _id: (node._id as Types.ObjectId).toString(),
-      name: node.name,
-      parent: node.parent ? node.parent.toString() : null,
-      children: childTrees,
-      createdAt: node.createdAt,
-      updatedAt: node.updatedAt,
-    };
   }
 }
