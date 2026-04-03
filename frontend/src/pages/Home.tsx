@@ -1,21 +1,21 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Plus } from 'lucide-react';
-import TreeNode from '../components/TreeNode';
-import AddNodeForm from '../components/AddNodeForm';
-import LoadingSpinner from '../components/LoadingSpinner';
-import DeleteModal from '../components/DeleteModal';
-import type { Node } from '../types';
-import { nodeService } from '../services/nodeService';
-import toast, { Toaster } from 'react-hot-toast';
+import React, { useEffect, useState, useCallback } from "react";
+import { Plus } from "lucide-react";
+import TreeNode from "../components/TreeNode";
+import AddNodeForm from "../components/AddNodeForm";
+import LoadingSpinner from "../components/LoadingSpinner";
+import DeleteModal from "../components/DeleteModal";
+import type { Node } from "../types";
+import { nodeService } from "../services/nodeService";
+import toast, { Toaster } from "react-hot-toast";
 
 const Home: React.FC = () => {
   const [rootNodes, setRootNodes] = useState<Node[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deleteModal, setDeleteModal] = useState<{ 
-    show: boolean; 
-    nodeId: string; 
-    nodeName: string 
+  const [deleteModal, setDeleteModal] = useState<{
+    show: boolean;
+    nodeId: string;
+    nodeName: string;
   } | null>(null);
 
   const fetchRootNodes = async () => {
@@ -25,8 +25,10 @@ const Home: React.FC = () => {
       const roots = await nodeService.getRootNodes();
       setRootNodes(roots);
     } catch (err) {
-      console.error('Failed to fetch nodes:', err);
-      setError("Could not connect to backend. Make sure the server is running on port 5000.");
+      console.error("Failed to fetch nodes:", err);
+      setError(
+        "Could not connect to backend. Make sure the server is running on port 5000.",
+      );
       toast.error("Failed to load node tree");
     } finally {
       setLoading(false);
@@ -39,7 +41,7 @@ const Home: React.FC = () => {
 
   const handleNodeAdded = useCallback((newNode: Node, parentId?: string) => {
     if (!parentId) {
-      setRootNodes(prev => [...prev, newNode]);
+      setRootNodes((prev) => [...prev, newNode]);
       toast.success("Root node created successfully");
     } else {
       fetchRootNodes();
@@ -47,25 +49,28 @@ const Home: React.FC = () => {
     }
   }, []);
 
-  const handleNodeDeleted = useCallback((id: string) => {
-    const findNode = (nodes: Node[]): Node | undefined => {
-      for (const node of nodes) {
-        if (node._id === id) return node;
-        const found = findNode(node.children || []);
-        if (found) return found;
-      }
-      return undefined;
-    };
+  const handleNodeDeleted = useCallback(
+    (id: string) => {
+      const findNode = (nodes: Node[]): Node | undefined => {
+        for (const node of nodes) {
+          if (node._id === id) return node;
+          const found = findNode(node.children || []);
+          if (found) return found;
+        }
+        return undefined;
+      };
 
-    const nodeToDelete = findNode(rootNodes);
-    if (nodeToDelete) {
-      setDeleteModal({
-        show: true,
-        nodeId: id,
-        nodeName: nodeToDelete.name
-      });
-    }
-  }, [rootNodes]);
+      const nodeToDelete = findNode(rootNodes);
+      if (nodeToDelete) {
+        setDeleteModal({
+          show: true,
+          nodeId: id,
+          nodeName: nodeToDelete.name,
+        });
+      }
+    },
+    [rootNodes],
+  );
 
   const confirmDelete = async () => {
     if (!deleteModal) return;
@@ -88,7 +93,7 @@ const Home: React.FC = () => {
   const handleAddRootNode = async (name: string) => {
     try {
       const newNode = await nodeService.createNode({ name });
-      setRootNodes(prev => [...prev, newNode]);
+      setRootNodes((prev) => [...prev, newNode]);
       toast.success("Root node created");
     } catch (err) {
       toast.error("Failed to create root node");
@@ -120,8 +125,12 @@ const Home: React.FC = () => {
       <div className="max-w-4xl mx-auto px-6">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Recursive Node Tree</h1>
-          <p className="text-gray-600">Build and manage hierarchical data with infinite nesting</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Recursive Node Tree
+          </h1>
+          <p className="text-gray-600">
+            Build and manage hierarchical data with infinite nesting
+          </p>
         </div>
 
         {/* Add Root Node Section */}
@@ -131,13 +140,17 @@ const Home: React.FC = () => {
               <Plus className="text-blue-600" size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">Add Root Node</h2>
-              <p className="text-sm text-gray-500">Start your tree by creating a root node</p>
+              <h2 className="text-xl font-semibold text-gray-800">
+                Add Root Node
+              </h2>
+              <p className="text-sm text-gray-500">
+                Start your tree by creating a root node
+              </p>
             </div>
           </div>
-          <AddNodeForm 
-            onSubmit={handleAddRootNode} 
-            placeholder="Enter root node name" 
+          <AddNodeForm
+            onSubmit={handleAddRootNode}
+            placeholder="Enter root node name"
           />
         </div>
 
@@ -145,7 +158,6 @@ const Home: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
           <div className="px-8 py-5 border-b bg-gray-50 flex justify-between items-center">
             <h2 className="font-semibold text-gray-700">Your Tree Structure</h2>
-            
           </div>
 
           <div className="p-8">
@@ -171,29 +183,28 @@ const Home: React.FC = () => {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-10">
-          Full Stack Recursive Node Tree • React + TypeScript + Tailwind + MongoDB
+          Full Stack Recursive Node Tree • React + TypeScript + Tailwind +
+          MongoDB
         </p>
       </div>
 
-      {/* Delete Confirmation Modal */}
       <DeleteModal
         isOpen={deleteModal?.show || false}
-        nodeName={deleteModal?.nodeName || ''}
+        nodeName={deleteModal?.nodeName || ""}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />
 
-      <Toaster 
-        position="top-center" 
-        closeButton 
+      <Toaster
+        position="top-center"
         toastOptions={{
           success: {
             duration: 3000,
-            style: { background: '#10b981', color: '#fff' },
+            style: { background: "#10b981", color: "#fff" },
           },
           error: {
             duration: 4000,
-            style: { background: '#ef4444', color: '#fff' },
+            style: { background: "#ef4444", color: "#fff" },
           },
         }}
       />
