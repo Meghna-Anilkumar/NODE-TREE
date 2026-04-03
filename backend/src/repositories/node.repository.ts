@@ -24,8 +24,8 @@ export class NodeRepository implements INodeRepository {
 
 
   async findRootNodes(): Promise<INode[]> {
-    return NodeModel.find({ parent: { $exists: false } });
-  }
+  return NodeModel.find({ $or: [{ parent: null }, { parent: { $exists: false } }] });
+}
 
   async findChildren(parentId: string | Types.ObjectId): Promise<INode[]> {
     return NodeModel.find({ parent: new Types.ObjectId(parentId) });

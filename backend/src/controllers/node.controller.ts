@@ -15,6 +15,7 @@ export class NodeController implements INodeController {
   ): Promise<void> {
     try {
       const tree = await this._nodeService.getFullTree();
+      console.log('Full tree:',tree)
       const response: ApiResponse<typeof tree> = {
         success: true,
         data: tree,

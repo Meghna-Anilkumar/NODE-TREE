@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
@@ -13,8 +12,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
-app.use(helmet());
+const clientUrl = process.env.CLIENT_URL 
+const corsOptions: cors.CorsOptions = {
+    origin: clientUrl
+};
+app.use(cors(corsOptions))
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
